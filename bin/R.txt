@@ -345,8 +345,8 @@ int drawable abc_textfield_search_activated_mtrl_alpha 0x7f020034
 int drawable abc_textfield_search_default_mtrl_alpha 0x7f020035
 int drawable abc_textfield_search_material 0x7f020036
 int drawable ainola 0x7f020037
-int drawable ic_launcher 0x7f020038
-int drawable kompassi 0x7f020039
+int drawable compass 0x7f020038
+int drawable icon 0x7f020039
 int drawable play 0x7f02003a
 int id action_bar 0x7f0a0031
 int id action_bar_activity_content 0x7f0a0003
@@ -361,7 +361,7 @@ int id action_menu_presenter 0x7f0a0006
 int id action_mode_bar 0x7f0a002e
 int id action_mode_bar_stub 0x7f0a002d
 int id action_mode_close_button 0x7f0a0020
-int id action_settings 0x7f0a0045
+int id action_settings 0x7f0a0046
 int id activity_chooser_view_content 0x7f0a0021
 int id ainola 0x7f0a0040
 int id always 0x7f0a0014
@@ -387,6 +387,7 @@ int id image 0x7f0a0023
 int id listMode 0x7f0a000a
 int id list_item 0x7f0a0025
 int id middle 0x7f0a001d
+int id myvideoview 0x7f0a0045
 int id never 0x7f0a0017
 int id none 0x7f0a000f
 int id normal 0x7f0a000b

@@ -13,7 +13,7 @@
         android:layout_height="300dp"
         android:layout_marginTop="20dp"
         android:layout_centerHorizontal="true"
-        android:src="@drawable/kompassi"/>
+        android:src="@drawable/compass"/>
   
     <ImageView android:id="@+id/ainola"
         android:contentDescription="@string/ainola_desc"    
