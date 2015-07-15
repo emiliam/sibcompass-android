@@ -1,7 +1,7 @@
 package fi.yle.sibkompassi;
 
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
-import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,7 +37,7 @@ public class MainActivity extends ActionBarActivity {
 		decorView.setSystemUiVisibility(uiOptions);
 		// Remember that you should never show the action bar if the
 		// status bar is hidden, so hide that too if necessary.
-		ActionBar actionBar = getActionBar();
+		ActionBar actionBar = getSupportActionBar();
 		actionBar.hide();
 		setContentView(R.layout.activity_main);
 	}
