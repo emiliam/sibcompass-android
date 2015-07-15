@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp" 
+    android:background="@android:color/black" >
+
+    
+    <ImageView android:id="@+id/compass"
+        android:contentDescription="@string/compass_desc"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/kompassi"/>
+  
+    <ImageView android:id="@+id/ainola"
+        android:contentDescription="@string/ainola_desc"    
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/ainola" />
+		<TextView
+		    	android:id="@+id/degree"
+		    	android:layout_width="wrap_content"
+        	android:layout_height="wrap_content"
+        	android:layout_marginTop="20dp"
+        	android:layout_marginBottom="20dp"
+        	android:layout_centerInParent="true"
+        	android:text="@string/compass_degree"
+        	android:layout_below="@id/compass"
+        	android:textColor="@android:color/white"/>
+    <TextView
+        android:id="@+id/symphony"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/degree"
+        android:layout_centerInParent="true"
+        
+        android:text="@string/symphony_name"
+        android:textColor="@android:color/white" 
+        android:textSize="16sp" />
+     <TextView
+        android:id="@+id/symphony_nr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/degree"
+        android:layout_toRightOf="@+id/symphony"
+        android:layout_marginLeft="10dp"
+        android:text="@string/symphony_nr"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+    
+    <ImageButton
+        	android:id="@+id/play"
+        	android:layout_width="100dp"
+        	android:layout_height="wrap_content"
+        	android:layout_marginTop="20dp"
+          android:layout_centerHorizontal="true"
+          android:layout_below="@+id/symphony"
+          android:background="@android:color/black"
+        	android:src="@drawable/play" 
+        	android:onClick="playSong"/>
+
+</RelativeLayout>
+    

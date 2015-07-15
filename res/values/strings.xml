@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">SibKompassi</string>
+    <string name="play_button">Play</string>
+    <string name="action_settings">Settings</string>
+    <string name="symphony_name">SINFONIA NRO</string>
+    <string name="compass_desc">Compass</string>
+    <string name="ainola_desc">Ainola</string>
+    <string name="symphony_nr">3</string>
+    <string name="compass_degree">0</string>
+    <string name="title_activity_play_song">PlaySongActivity</string>
+
+</resources>
