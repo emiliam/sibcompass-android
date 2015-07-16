@@ -9,6 +9,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,20 +25,21 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 /**
  * A compass which finds your way to Ainola, home of Siblius in the honor of his
  * 150 year birthday.
  * 
- * Restriction: The user location is only set once so there might be some in
- * accuracy to Ainola which should be noted.
- * 
- * Calculations for compass heading by William J. Francis August 8, 2014
- *
+ * Calculations for compass heading by William J. Francis, August 8, 2014
+ * Location based code is partly written by Ravi Tamada, February 3, 2015
  */
 public class MainActivity extends ActionBarActivity implements
-		SensorEventListener, ConnectionCallbacks, OnConnectionFailedListener {
+		SensorEventListener, ConnectionCallbacks, OnConnectionFailedListener,
+		LocationListener {
+	private static final String TAG = "MainActivity";
 	public final static String EXTRA_SONG = "fi.yle.sibkompassi.SONG";
 	ImageButton imgButton;
 	private SensorManager sensorManager;
@@ -60,7 +62,10 @@ public class MainActivity extends ActionBarActivity implements
 	private double userlatitude = 0;
 	private double userlongitude = 0;
 	private Location mLastLocation;
-
+	// boolean flag to toggle periodic location updates
+    private boolean mRequestingLocationUpdates = false;
+    private LocationRequest mLocationRequest;
+	
 	public void playSong(View view) {
 		Intent intent = new Intent(this, PlaySongActivity.class);
 		intent.putExtra(EXTRA_SONG, getSongNr());
@@ -70,15 +75,6 @@ public class MainActivity extends ActionBarActivity implements
 		}
 	}
 
-	@Override
-	public void onConnected(Bundle connectionHint) {
-		mLastLocation = LocationServices.FusedLocationApi
-				.getLastLocation(mGoogleApiClient);
-		if (mLastLocation != null) {
-			userlatitude = mLastLocation.getLatitude();
-			userlongitude = mLastLocation.getLongitude();
-		}
-	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -94,10 +90,19 @@ public class MainActivity extends ActionBarActivity implements
 		magnetometer = sensorManager
 				.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		compass = (ImageView) findViewById(R.id.compass);
-
+		ainola = (ImageView) findViewById(R.id.ainola);
 		if (checkPlayServices()) {
 			buildGoogleApiClient();
 		}
+		// Toggling the periodic location updates
+		
+        ainola.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				togglePeriodicLocationUpdates();
+			}
+		});
 	}
 
 	@Override
@@ -122,7 +127,6 @@ public class MainActivity extends ActionBarActivity implements
 	@Override
 	public void onAccuracyChanged(Sensor arg0, int arg1) {
 		// no need
-
 	}
 
 	@Override
@@ -182,6 +186,11 @@ public class MainActivity extends ActionBarActivity implements
 				SensorManager.SENSOR_DELAY_GAME);
 
 		checkPlayServices();
+
+		// Resuming the periodic location updates
+		if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
+			startLocationUpdates();
+		}
 	}
 
 	@Override
@@ -190,7 +199,36 @@ public class MainActivity extends ActionBarActivity implements
 		// to save battery
 		sensorManager.unregisterListener(this, accelerometer);
 		sensorManager.unregisterListener(this, magnetometer);
+		stopLocationUpdates();
+	}
 
+	protected void startLocationUpdates() {
+		LocationServices.FusedLocationApi.requestLocationUpdates(
+				mGoogleApiClient, mLocationRequest, this);
+	}
+
+	protected void stopLocationUpdates() {
+		LocationServices.FusedLocationApi.removeLocationUpdates(
+				mGoogleApiClient, this);
+	}
+
+	protected void createLocationRequest() {
+		mLocationRequest = new LocationRequest();
+		mLocationRequest.setInterval(10000);
+		mLocationRequest.setFastestInterval(5000);
+		mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+		mLocationRequest.setSmallestDisplacement(100); // 100 meters
+	}
+
+
+	private void togglePeriodicLocationUpdates() {
+		if (!mRequestingLocationUpdates) {
+			mRequestingLocationUpdates = true;
+			startLocationUpdates();
+		} else {
+			mRequestingLocationUpdates = false;
+			stopLocationUpdates();
+		}
 	}
 
 	private void hideStatusBar() {
@@ -264,7 +302,7 @@ public class MainActivity extends ActionBarActivity implements
 
 		float degree = (float) (direction * Math.PI / 180.0)
 				+ angleBetweenAinolaAndCurrentLocation;
-		ainola = (ImageView) findViewById(R.id.ainola);
+		
 		RotateAnimation animation = new RotateAnimation(currentDegree, -degree,
 				Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,
 				0.5f);
@@ -287,7 +325,25 @@ public class MainActivity extends ActionBarActivity implements
 
 	@Override
 	public void onConnectionFailed(ConnectionResult result) {
+		Log.i(TAG, "Could not connect to Location service.");
+		ainola.setVisibility(View.INVISIBLE);
+	}
 
+	@Override
+	public void onLocationChanged(Location location) {
+		// Assign the new location
+		mLastLocation = location;
+		// Displaying the new location on UI
+		getLocation();
+	}
+
+	@Override
+	public void onConnected(Bundle arg0) {
+		// Once connected with google api, get the location
+		getLocation();
+		if (mRequestingLocationUpdates) {
+			startLocationUpdates();
+		}
 	}
 
 	/**
@@ -310,4 +366,13 @@ public class MainActivity extends ActionBarActivity implements
 		return true;
 	}
 
+	private void getLocation() {
+		mLastLocation = LocationServices.FusedLocationApi
+                .getLastLocation(mGoogleApiClient);
+		if (mLastLocation != null) {
+			userlatitude = mLastLocation.getLatitude();
+			userlongitude = mLastLocation.getLongitude();
+		}
+		heading.setText(userlatitude + ", " + userlongitude);
+	}
 }
