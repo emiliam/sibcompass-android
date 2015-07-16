@@ -8,7 +8,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,13 +37,12 @@ public class MainActivity extends ActionBarActivity implements
 	private boolean mLastMagnetometerSet = false;
 	private float[] mR = new float[9];
 	private float[] mOrientation = new float[3];
+	private TextView songNr;
+	private String currentSongNr;
 
 	public void playSong(View view) {
 		Intent intent = new Intent(this, PlaySongActivity.class);
-
-		TextView songNr = (TextView) findViewById(R.id.symphony_nr);
-		String song = songNr.getText().toString();
-		intent.putExtra(EXTRA_SONG, song);
+		intent.putExtra(EXTRA_SONG, getSongNr());
 		// Verify that the intent will resolve to an activity
 		if (intent.resolveActivity(getPackageManager()) != null) {
 			startActivity(intent);
@@ -122,6 +120,8 @@ public class MainActivity extends ActionBarActivity implements
 			animation.setFillAfter(true);
 			compass.startAnimation(animation);
 			currentDegree = -degree;
+			currentSongNr = Integer.toString(calculateCompassSector(degree));
+			updateSongNumber();
 		}
 	}
 
@@ -156,4 +156,35 @@ public class MainActivity extends ActionBarActivity implements
 		actionBar.hide();
 	}
 
+	private void updateSongNumber() {
+		String songNr = getSongNr();
+		if (!currentSongNr.equals(songNr)) {
+			heading.setText(songNr);
+			currentSongNr = songNr;
+		}
+	}
+
+	private String getSongNr() {
+		songNr = (TextView) findViewById(R.id.symphony_nr);
+		return songNr != null ? songNr.getText().toString() : "1";
+	}
+	
+	private int calculateCompassSector(float heading) {
+		float sectorMin = 0;
+		float sectorMax = 23;
+		
+		if (heading > 337 && heading < sectorMax) {
+			return 1;
+		} 
+		sectorMin = sectorMax;
+		sectorMax = sectorMin + 45;
+		for (int sector=2; sector<=8; sector++) {
+			if (sectorMax < 360 && heading > sectorMin && heading < sectorMax) {
+				return sector;
+			}
+			sectorMin = sectorMax;
+			sectorMax = sectorMin + 45;
+		}
+		return 1;
+	}
 }
