@@ -8,7 +8,6 @@
     <string name="compass_desc">Compass</string>
     <string name="ainola_desc">Ainola</string>
     <string name="symphony_nr">3</string>
-    <string name="compass_degree">0</string>
     <string name="title_activity_play_song">PlaySongActivity</string>
 
 </resources>

@@ -371,7 +371,6 @@ int id collapseActionView 0x7f0a0015
 int id compass 0x7f0a003f
 int id decor_content_parent 0x7f0a002f
 int id default_activity_button 0x7f0a0024
-int id degree 0x7f0a0041
 int id dialog 0x7f0a0019
 int id disableHome 0x7f0a000d
 int id dropdown 0x7f0a001a
@@ -379,6 +378,7 @@ int id edit_query 0x7f0a0033
 int id end 0x7f0a001c
 int id expand_activities_button 0x7f0a0022
 int id expanded_menu 0x7f0a0028
+int id heading 0x7f0a0041
 int id home 0x7f0a0000
 int id homeAsUp 0x7f0a000e
 int id icon 0x7f0a0026
@@ -469,12 +469,11 @@ int string abc_toolbar_collapse_description 0x7f0b0004
 int string action_settings 0x7f0b0012
 int string ainola_desc 0x7f0b0015
 int string app_name 0x7f0b0010
-int string compass_degree 0x7f0b0017
 int string compass_desc 0x7f0b0014
 int string play_button 0x7f0b0011
 int string symphony_name 0x7f0b0013
 int string symphony_nr 0x7f0b0016
-int string title_activity_play_song 0x7f0b0018
+int string title_activity_play_song 0x7f0b0017
 int style Animation_AppCompat_DropDownUp 0x7f0c00cf
 int style AppBaseTheme 0x7f0c00f8
 int style AppTheme 0x7f0c00f9

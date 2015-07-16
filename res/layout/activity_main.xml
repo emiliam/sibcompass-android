@@ -23,20 +23,20 @@
         android:layout_centerHorizontal="true"
         android:src="@drawable/ainola" />
 		<TextView
-		    	android:id="@+id/degree"
+		    	android:id="@+id/heading"
 		    	android:layout_width="wrap_content"
         	android:layout_height="wrap_content"
         	android:layout_marginTop="20dp"
         	android:layout_marginBottom="20dp"
         	android:layout_centerInParent="true"
-        	android:text="@string/compass_degree"
+        	android:text="0 °"
         	android:layout_below="@id/compass"
         	android:textColor="@android:color/white"/>
     <TextView
         android:id="@+id/symphony"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/degree"
+        android:layout_below="@+id/heading"
         android:layout_centerInParent="true"
         
         android:text="@string/symphony_name"
@@ -46,7 +46,7 @@
         android:id="@+id/symphony_nr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/degree"
+        android:layout_below="@+id/heading"
         android:layout_toRightOf="@+id/symphony"
         android:layout_marginLeft="10dp"
         android:text="@string/symphony_nr"
