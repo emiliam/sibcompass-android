@@ -9,16 +9,18 @@
     
     <ImageView android:id="@+id/compass"
         android:contentDescription="@string/compass_desc"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:layout_centerHorizontal="true"
         android:src="@drawable/compass"/>
   
     <ImageView android:id="@+id/ainola"
         android:contentDescription="@string/ainola_desc"    
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:layout_centerHorizontal="true"
         android:src="@drawable/ainola" />
@@ -38,7 +40,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/heading"
         android:layout_centerInParent="true"
-        
         android:text="@string/symphony_name"
         android:textColor="@android:color/white" 
         android:textSize="16sp" />
@@ -55,7 +56,7 @@
     
     <ImageButton
         	android:id="@+id/play"
-        	android:layout_width="100dp"
+        	android:layout_width="wrap_content"
         	android:layout_height="wrap_content"
         	android:layout_marginTop="20dp"
           android:layout_centerHorizontal="true"

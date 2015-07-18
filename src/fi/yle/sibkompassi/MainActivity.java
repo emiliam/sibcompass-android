@@ -44,6 +44,7 @@ public class MainActivity extends ActionBarActivity implements
 	ImageButton imgButton;
 	private SensorManager sensorManager;
 	private TextView heading;
+	private TextView symphonyNr;
 	private ImageView compass;
 	private float currentDegree = 0f;
 	private Sensor accelerometer;
@@ -63,9 +64,9 @@ public class MainActivity extends ActionBarActivity implements
 	private double userlongitude = 0;
 	private Location mLastLocation;
 	// boolean flag to toggle periodic location updates
-    private boolean mRequestingLocationUpdates = false;
-    private LocationRequest mLocationRequest;
-	
+	private boolean mRequestingLocationUpdates = false;
+	private LocationRequest mLocationRequest;
+
 	public void playSong(View view) {
 		Intent intent = new Intent(this, PlaySongActivity.class);
 		intent.putExtra(EXTRA_SONG, getSongNr());
@@ -75,29 +76,29 @@ public class MainActivity extends ActionBarActivity implements
 		}
 	}
 
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		hideStatusBar();
 		setContentView(R.layout.activity_main);
-		// initialize your android device sensor capabilities
-		heading = (TextView) findViewById(R.id.heading);
+		
 		// initialize device sensor to detect changes in heading
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		accelerometer = sensorManager
 				.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		magnetometer = sensorManager
 				.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		heading = (TextView) findViewById(R.id.heading);
 		compass = (ImageView) findViewById(R.id.compass);
 		ainola = (ImageView) findViewById(R.id.ainola);
+		symphonyNr = (TextView) findViewById(R.id.symphony_nr);
 		if (checkPlayServices()) {
 			buildGoogleApiClient();
 		}
 		// Toggling the periodic location updates
-		
-        ainola.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-			
+
+		ainola.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
 			@Override
 			public void onFocusChange(View v, boolean hasFocus) {
 				togglePeriodicLocationUpdates();
@@ -157,8 +158,8 @@ public class MainActivity extends ActionBarActivity implements
 			float degree = (float) (Math.toDegrees(azimuthInRadians) + 360) % 360;
 
 			// use displayDegree for displaying integer value of heading
-			int displayDegree = Math.round(degree);
-			heading.setText(Integer.toString(displayDegree) + " °");
+			int displayHeading = Math.round(degree);
+			heading.setText(Integer.toString(displayHeading) + " °");
 
 			RotateAnimation animation = new RotateAnimation(currentDegree,
 					-degree, Animation.RELATIVE_TO_SELF, 0.5f,
@@ -188,7 +189,7 @@ public class MainActivity extends ActionBarActivity implements
 		checkPlayServices();
 
 		// Resuming the periodic location updates
-		if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
+		if (mGoogleApiClient != null && mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
 			startLocationUpdates();
 		}
 	}
@@ -199,6 +200,7 @@ public class MainActivity extends ActionBarActivity implements
 		// to save battery
 		sensorManager.unregisterListener(this, accelerometer);
 		sensorManager.unregisterListener(this, magnetometer);
+
 		stopLocationUpdates();
 	}
 
@@ -208,8 +210,10 @@ public class MainActivity extends ActionBarActivity implements
 	}
 
 	protected void stopLocationUpdates() {
-		LocationServices.FusedLocationApi.removeLocationUpdates(
-				mGoogleApiClient, this);
+		if (mGoogleApiClient != null) {
+			LocationServices.FusedLocationApi.removeLocationUpdates(
+					mGoogleApiClient, this);
+		}
 	}
 
 	protected void createLocationRequest() {
@@ -219,7 +223,6 @@ public class MainActivity extends ActionBarActivity implements
 		mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 		mLocationRequest.setSmallestDisplacement(100); // 100 meters
 	}
-
 
 	private void togglePeriodicLocationUpdates() {
 		if (!mRequestingLocationUpdates) {
@@ -245,7 +248,7 @@ public class MainActivity extends ActionBarActivity implements
 	private void updateSongNumber() {
 		String songNr = getSongNr();
 		if (!currentSongNr.equals(songNr)) {
-			heading.setText(songNr);
+			symphonyNr.setText(songNr);
 			currentSongNr = songNr;
 		}
 	}
@@ -302,7 +305,7 @@ public class MainActivity extends ActionBarActivity implements
 
 		float degree = (float) (direction * Math.PI / 180.0)
 				+ angleBetweenAinolaAndCurrentLocation;
-		
+
 		RotateAnimation animation = new RotateAnimation(currentDegree, -degree,
 				Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,
 				0.5f);
@@ -320,7 +323,9 @@ public class MainActivity extends ActionBarActivity implements
 
 	@Override
 	public void onConnectionSuspended(int cause) {
-		mGoogleApiClient.connect();
+		if (mGoogleApiClient != null) {
+			mGoogleApiClient.connect();
+		}
 	}
 
 	@Override
@@ -367,12 +372,13 @@ public class MainActivity extends ActionBarActivity implements
 	}
 
 	private void getLocation() {
-		mLastLocation = LocationServices.FusedLocationApi
-                .getLastLocation(mGoogleApiClient);
-		if (mLastLocation != null) {
-			userlatitude = mLastLocation.getLatitude();
-			userlongitude = mLastLocation.getLongitude();
+		if (mGoogleApiClient != null) {
+			mLastLocation = LocationServices.FusedLocationApi
+					.getLastLocation(mGoogleApiClient);
+			if (mLastLocation != null) {
+				userlatitude = mLastLocation.getLatitude();
+				userlongitude = mLastLocation.getLongitude();
+			}
 		}
-		heading.setText(userlatitude + ", " + userlongitude);
 	}
 }
