@@ -33,6 +33,8 @@ import com.google.android.gms.location.LocationServices;
  * A compass which finds your way to Ainola, home of Siblius in the honor of his
  * 150 year birthday.
  * 
+ * Note! The compass points to magnetic north, not true north.
+ * 
  * Calculations for compass heading by William J. Francis, August 8, 2014
  * Location based code is partly written by Ravi Tamada, February 3, 2015
  */
@@ -55,8 +57,6 @@ public class MainActivity extends ActionBarActivity implements
 	private boolean mLastMagnetometerSet = false;
 	private float[] mR = new float[9];
 	private float[] mOrientation = new float[3];
-	private TextView songNr;
-	private String currentSongNr;
 	private float angleBetweenAinolaAndCurrentLocation;
 	private ImageView ainola;
 	private GoogleApiClient mGoogleApiClient;
@@ -88,10 +88,12 @@ public class MainActivity extends ActionBarActivity implements
 				.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		magnetometer = sensorManager
 				.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		
 		heading = (TextView) findViewById(R.id.heading);
 		compass = (ImageView) findViewById(R.id.compass);
 		ainola = (ImageView) findViewById(R.id.ainola);
 		symphonyNr = (TextView) findViewById(R.id.symphony_nr);
+		
 		if (checkPlayServices()) {
 			buildGoogleApiClient();
 		}
@@ -106,6 +108,35 @@ public class MainActivity extends ActionBarActivity implements
 		});
 	}
 
+	@Override
+	public void onResume() {
+		super.onResume();
+		// to save battery
+		// Register this class as a listener for the accelerometer sensor
+		sensorManager.registerListener(this, accelerometer,
+				SensorManager.SENSOR_DELAY_UI);
+		// ...and the orientation sensor
+		sensorManager.registerListener(this, magnetometer,
+				SensorManager.SENSOR_DELAY_UI);
+
+		checkPlayServices();
+
+		// Resuming the periodic location updates
+		if (mGoogleApiClient != null && mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
+			startLocationUpdates();
+		}
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		// to save battery
+		sensorManager.unregisterListener(this, accelerometer);
+		sensorManager.unregisterListener(this, magnetometer);
+
+		stopLocationUpdates();
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -155,54 +186,29 @@ public class MainActivity extends ActionBarActivity implements
 					mLastMagnetometer);
 			SensorManager.getOrientation(mR, mOrientation);
 			float azimuthInRadians = mOrientation[0];
-			float degree = (float) (Math.toDegrees(azimuthInRadians) + 360) % 360;
-
+			
+			Log.i("Rad:" + azimuthInRadians, "Degree: " + Math.toDegrees(azimuthInRadians));
+			float degree = (float) (Math.toDegrees(azimuthInRadians) + 360);
+			//float degree =  (float) Math.toDegrees(azimuthInRadians);
 			// use displayDegree for displaying integer value of heading
-			int displayHeading = Math.round(degree);
+			int displayHeading = -Math.round(degree);
 			heading.setText(Integer.toString(displayHeading) + " °");
 
 			RotateAnimation animation = new RotateAnimation(currentDegree,
 					-degree, Animation.RELATIVE_TO_SELF, 0.5f,
 					Animation.RELATIVE_TO_SELF, 0.5f);
-			animation.setDuration(120);
+			animation.setDuration(210);
 			animation.setFillAfter(true);
 			compass.startAnimation(animation);
 			currentDegree = -degree;
-			currentSongNr = Integer.toString(calculateCompassSector(degree));
-			updateSongNumber();
-			angleBetweenAinolaAndCurrentLocation = calculateAngleToAinola();
-			animateAinolaNeedle();
+			updateSongNumber(currentDegree);
+			//angleBetweenAinolaAndCurrentLocation = calculateAngleToAinola();
+			//animateAinolaNeedle();
+			
 		}
 	}
 
-	@Override
-	public void onResume() {
-		super.onResume();
-		// to save battery
-		// Register this class as a listener for the accelerometer sensor
-		sensorManager.registerListener(this, accelerometer,
-				SensorManager.SENSOR_DELAY_GAME);
-		// ...and the orientation sensor
-		sensorManager.registerListener(this, magnetometer,
-				SensorManager.SENSOR_DELAY_GAME);
 
-		checkPlayServices();
-
-		// Resuming the periodic location updates
-		if (mGoogleApiClient != null && mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
-			startLocationUpdates();
-		}
-	}
-
-	@Override
-	public void onPause() {
-		super.onPause();
-		// to save battery
-		sensorManager.unregisterListener(this, accelerometer);
-		sensorManager.unregisterListener(this, magnetometer);
-
-		stopLocationUpdates();
-	}
 
 	protected void startLocationUpdates() {
 		LocationServices.FusedLocationApi.requestLocationUpdates(
@@ -245,17 +251,17 @@ public class MainActivity extends ActionBarActivity implements
 		actionBar.hide();
 	}
 
-	private void updateSongNumber() {
-		String songNr = getSongNr();
-		if (!currentSongNr.equals(songNr)) {
-			symphonyNr.setText(songNr);
-			currentSongNr = songNr;
+	private void updateSongNumber(float degree) {
+		String oldSongNr = getSongNr();
+		String currentSongNr = Integer.toString(calculateCompassSector(degree));
+		if (!currentSongNr.equals(oldSongNr)) {
+			symphonyNr.setText(currentSongNr);
+			currentSongNr = oldSongNr;
 		}
 	}
 
 	private String getSongNr() {
-		songNr = (TextView) findViewById(R.id.symphony_nr);
-		return songNr != null ? songNr.getText().toString() : "1";
+		return symphonyNr != null ? symphonyNr.getText().toString() : "1";
 	}
 
 	private int calculateCompassSector(float heading) {
@@ -297,6 +303,7 @@ public class MainActivity extends ActionBarActivity implements
 
 	private void animateAinolaNeedle() {
 		float direction = currentDegree;
+		 Log.i("MainActivity", "Ainola current degree:" + direction);
 		if (direction > 180) {
 			direction = 360 - direction;
 		} else {
@@ -305,7 +312,7 @@ public class MainActivity extends ActionBarActivity implements
 
 		float degree = (float) (direction * Math.PI / 180.0)
 				+ angleBetweenAinolaAndCurrentLocation;
-
+		Log.i("MainActivity", "Ainola new direction:" + degree);
 		RotateAnimation animation = new RotateAnimation(currentDegree, -degree,
 				Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,
 				0.5f);
