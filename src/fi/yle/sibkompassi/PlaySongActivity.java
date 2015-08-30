@@ -1,13 +1,11 @@
 package fi.yle.sibkompassi;
 
 import android.content.Intent;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.Window;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
@@ -18,13 +16,12 @@ public class PlaySongActivity extends ActionBarActivity {
 		 Log.i("PlaySongActivity", "PlaySongActivity — onCreate");
 		super.onCreate(savedInstanceState);
 	    setContentView(R.layout.activity_play_song);
-	   // requestWindowFeature(Window.FEATURE_NO_TITLE);
-	    
+		
 		// Get the song nr from the intent
 	    Intent intent = getIntent();
 	    String songNr = intent.getStringExtra(MainActivity.EXTRA_SONG);
 	    Uri video = Uri.parse("android.resource://" + getPackageName() + "/raw/sibbe_"+ songNr);
-	    videoView = (VideoView) findViewById(R.id.myvideoview);
+	    videoView = (VideoView) findViewById(R.id.videoview);
 	    videoView.setVideoURI(video);
 	    videoView.setMediaController(new MediaController(this));
 	    videoView.start();
