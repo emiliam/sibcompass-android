@@ -3,4 +3,5 @@ bin/*
 *.class
 *.jar
 *.apk
-
+.project
+.classpath
