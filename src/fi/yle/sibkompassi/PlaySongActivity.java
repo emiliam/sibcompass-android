@@ -1,43 +1,34 @@
 package fi.yle.sibkompassi;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
+import android.view.Window;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
 public class PlaySongActivity extends ActionBarActivity {
-
+	VideoView videoView;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		 Log.i("PlaySongActivity", "PlaySongActivity — onCreate");
 		super.onCreate(savedInstanceState);
-		View decorView = getWindow().getDecorView();
-		// Hide the status bar.
-		int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
-		decorView.setSystemUiVisibility(uiOptions);
-		// Remember that you should never show the action bar if the
-		// status bar is hidden, so hide that too if necessary.
-		ActionBar actionBar = getSupportActionBar();
-		actionBar.hide();
-		
-		  // Get the message from the intent
+	    setContentView(R.layout.activity_play_song);
+	   // requestWindowFeature(Window.FEATURE_NO_TITLE);
+	    
+		// Get the song nr from the intent
 	    Intent intent = getIntent();
 	    String songNr = intent.getStringExtra(MainActivity.EXTRA_SONG);
-	    Uri video = Uri.parse("android.resource://fi.yle.sibkompassi/raw/sibbe_"+ songNr);
-	    VideoView videoPlayer = new VideoView(this);
-	    videoPlayer.setVideoURI(video);
-	    videoPlayer.setMediaController(new MediaController(this));
-	    videoPlayer.start();
-	    videoPlayer.requestFocus();
-	    
-	    setContentView(videoPlayer);
-	
+	    Uri video = Uri.parse("android.resource://" + getPackageName() + "/raw/sibbe_"+ songNr);
+	    videoView = (VideoView) findViewById(R.id.myvideoview);
+	    videoView.setVideoURI(video);
+	    videoView.setMediaController(new MediaController(this));
+	    videoView.start();
+	    videoView.requestFocus();	
 	}
 
 	@Override
