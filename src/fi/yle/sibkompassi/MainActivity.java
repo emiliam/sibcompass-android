@@ -1,11 +1,13 @@
 package fi.yle.sibkompassi;
 
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -97,8 +99,8 @@ public class MainActivity extends ActionBarActivity implements
 		if (checkPlayServices()) {
 			buildGoogleApiClient();
 		}
+		
 		// Toggling the periodic location updates
-
 		ainola.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 
 			@Override
@@ -106,12 +108,15 @@ public class MainActivity extends ActionBarActivity implements
 				togglePeriodicLocationUpdates();
 			}
 		});
+		
+		
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		// to save battery
+		isLocationServiceEnabled();
+	
 		// Register this class as a listener for the accelerometer sensor
 		sensorManager.registerListener(this, accelerometer,
 				SensorManager.SENSOR_DELAY_UI);
@@ -187,11 +192,11 @@ public class MainActivity extends ActionBarActivity implements
 			SensorManager.getOrientation(mR, mOrientation);
 			float azimuthInRadians = mOrientation[0];
 			
-			Log.i("Rad:" + azimuthInRadians, "Degree: " + Math.toDegrees(azimuthInRadians));
+			//Log.i("Rad:" + azimuthInRadians, "Degree: " + Math.toDegrees(azimuthInRadians));
 			float degree = (float) (Math.toDegrees(azimuthInRadians) + 360);
 			//float degree =  (float) Math.toDegrees(azimuthInRadians);
 			// use displayDegree for displaying integer value of heading
-			int displayHeading = -Math.round(degree);
+			int displayHeading = Math.round(degree);
 			heading.setText(Integer.toString(displayHeading) + " °");
 
 			RotateAnimation animation = new RotateAnimation(currentDegree,
@@ -201,7 +206,7 @@ public class MainActivity extends ActionBarActivity implements
 			animation.setFillAfter(true);
 			compass.startAnimation(animation);
 			currentDegree = -degree;
-			updateSongNumber(currentDegree);
+			updateSongNumber(displayHeading);
 			//angleBetweenAinolaAndCurrentLocation = calculateAngleToAinola();
 			//animateAinolaNeedle();
 			
@@ -228,12 +233,14 @@ public class MainActivity extends ActionBarActivity implements
 		mLocationRequest.setFastestInterval(5000);
 		mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 		mLocationRequest.setSmallestDisplacement(100); // 100 meters
+	
 	}
 
 	private void togglePeriodicLocationUpdates() {
 		if (!mRequestingLocationUpdates) {
 			mRequestingLocationUpdates = true;
 			startLocationUpdates();
+			
 		} else {
 			mRequestingLocationUpdates = false;
 			stopLocationUpdates();
@@ -251,9 +258,9 @@ public class MainActivity extends ActionBarActivity implements
 		actionBar.hide();
 	}
 
-	private void updateSongNumber(float degree) {
+	private void updateSongNumber(float currentDegree) {
 		String oldSongNr = getSongNr();
-		String currentSongNr = Integer.toString(calculateCompassSector(degree));
+		String currentSongNr = Integer.toString(calculateCompassSector(currentDegree));
 		if (!currentSongNr.equals(oldSongNr)) {
 			symphonyNr.setText(currentSongNr);
 			currentSongNr = oldSongNr;
@@ -267,7 +274,6 @@ public class MainActivity extends ActionBarActivity implements
 	private int calculateCompassSector(float heading) {
 		float sectorMin = 0;
 		float sectorMax = 23;
-
 		if (heading > 337 && heading < sectorMax) {
 			return 1;
 		}
@@ -333,12 +339,12 @@ public class MainActivity extends ActionBarActivity implements
 		if (mGoogleApiClient != null) {
 			mGoogleApiClient.connect();
 		}
+		
 	}
 
 	@Override
 	public void onConnectionFailed(ConnectionResult result) {
 		Log.i(TAG, "Could not connect to Location service.");
-		ainola.setVisibility(View.INVISIBLE);
 	}
 
 	@Override
@@ -388,4 +394,14 @@ public class MainActivity extends ActionBarActivity implements
 			}
 		}
 	}
+	 public boolean isLocationServiceEnabled() {
+		 LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		 if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+			 ainola.setVisibility(View.VISIBLE);
+			 return true;
+		 } else {
+			 ainola.setVisibility(View.INVISIBLE);
+			 return false;
+		 }
+	 }
 }
