@@ -1,5 +1,6 @@
 package fi.yle.sibkompassi;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -9,8 +10,6 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,7 +39,7 @@ import com.google.android.gms.location.LocationServices;
  * Calculations for compass heading by William J. Francis, August 8, 2014
  * Location based code is partly written by Ravi Tamada, February 3, 2015
  */
-public class MainActivity extends ActionBarActivity implements
+public class MainActivity extends Activity implements
 		SensorEventListener, ConnectionCallbacks, OnConnectionFailedListener,
 		LocationListener {
 	private static final String TAG = "MainActivity";
@@ -248,14 +247,7 @@ public class MainActivity extends ActionBarActivity implements
 	}
 
 	private void hideStatusBar() {
-		View decorView = getWindow().getDecorView();
-		// Hide the status bar.
-		int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
-		decorView.setSystemUiVisibility(uiOptions);
-		// Remember that you should never show the action bar if the
-		// status bar is hidden, so hide that too if necessary.
-		ActionBar actionBar = getSupportActionBar();
-		actionBar.hide();
+		
 	}
 
 	private void updateSongNumber(float currentDegree) {
