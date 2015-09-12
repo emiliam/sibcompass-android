@@ -11,8 +11,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
 import android.view.animation.Animation;
@@ -37,401 +35,347 @@ import com.google.android.gms.location.LocationServices;
  * 
  * Note! The compass points to magnetic north, not true north.
  * 
- * Calculations for compass heading by William J. Francis, August 8, 2014
- * Location based code is partly written by Ravi Tamada, February 3, 2015
+ * Calculations for compass heading by
+ * http://stackoverflow.com/users/4535635/orka.
  */
-public class MainActivity extends Activity implements
-        SensorEventListener, ConnectionCallbacks, OnConnectionFailedListener,
-        LocationListener {
-    private static final String TAG = "MainActivity";
-    public final static String EXTRA_SONG = "fi.yle.sibkompassi.SONG";
-    ImageButton imgButton;
-    private SensorManager sensorManager;
-    private TextView heading;
-    private TextView symphonyNr;
-    private ImageView compass;
-    private float currentDegree = 0f;
-    private Sensor accelerometer;
-    private Sensor magnetometer;
-    private float[] mLastAccelerometer = new float[3];
-    private float[] mLastMagnetometer = new float[3];
-    private boolean mLastAccelerometerSet = false;
-    private boolean mLastMagnetometerSet = false;
-    private float[] temporaryRotationMatrix = new float[9];
-    private float[] rotationMatrix = new float[9];
-     private float[] orientationData = new float[3];
-    private float angleBetweenAinolaAndCurrentLocation;
-    private ImageView ainola;
-    private GoogleApiClient mGoogleApiClient;
-    private double userlatitude = 0;
-    private double userlongitude = 0;
-    private Location mLastLocation;
-    // boolean flag to toggle periodic location updates
-    private boolean mRequestingLocationUpdates = false;
-    private LocationRequest mLocationRequest;
+public class MainActivity extends Activity implements SensorEventListener,
+		ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
+	
+	private static final String TAG = "MainActivity";
+	public final static String EXTRA_SONG = "fi.yle.sibkompassi.SONG";
 
-    public void playSong(View view) {
-        Intent intent = new Intent(this, PlaySongActivity.class);
-        intent.putExtra(EXTRA_SONG, getSongNr());
-        // Verify that the intent will resolve to an activity
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
-        }
-    }
+	private SensorManager sensorManager;
+	private TextView heading;
+	private TextView symphonyNr;
+	private ImageView compass;
+	private float currentDegree = 0f;
+	private Sensor accelerometer;
+	private Sensor magnetometer;
+	private float[] mLastAccelerometer = new float[3];
+	private float[] mLastMagnetometer = new float[3];
+	private boolean mLastAccelerometerSet = false;
+	private boolean mLastMagnetometerSet = false;
+	private float[] temporaryRotationMatrix = new float[9];
+	private float[] rotationMatrix = new float[9];
+	private float[] orientationData = new float[3];
+	private float angleBetweenAinolaAndCurrentLocation;
+	private ImageView ainola;
+	private GoogleApiClient mGoogleApiClient;
+	private double userlatitude = 0;
+	private double userlongitude = 0;
+	private Location mLastLocation;
+	private LocationRequest mLocationRequest;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        hideStatusBar();
-        setContentView(R.layout.activity_main);
-        
-        // initialize device sensor to detect changes in heading
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        accelerometer = sensorManager
-                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        magnetometer = sensorManager
-                .getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        
-        heading = (TextView) findViewById(R.id.heading);
-        compass = (ImageView) findViewById(R.id.compass);
-        ainola = (ImageView) findViewById(R.id.ainola);
-        symphonyNr = (TextView) findViewById(R.id.symphony_nr);
-        
-        if (checkPlayServices()) {
-            buildGoogleApiClient();
-        }
-        
-        // Toggling the periodic location updates
-        ainola.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+	public void playSong(View view) {
+		Intent intent = new Intent(this, PlaySongActivity.class);
+		intent.putExtra(EXTRA_SONG, getSongNr());
+		if (intent.resolveActivity(getPackageManager()) != null) {
+			startActivity(intent);
+		}
+	}
 
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                togglePeriodicLocationUpdates();
-            }
-        });
-        
-        
-    }
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        isLocationServiceEnabled();
-    
-        // Register this class as a listener for the accelerometer sensor
-        sensorManager.registerListener(this, accelerometer,
-                SensorManager.SENSOR_DELAY_NORMAL);
-        // ...and the orientation sensor
-        sensorManager.registerListener(this, magnetometer,
-                SensorManager.SENSOR_DELAY_NORMAL);
+		setContentView(R.layout.activity_main);
 
-        checkPlayServices();
+		// initialize device sensor to detect changes in heading
+		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		accelerometer = sensorManager
+				.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		magnetometer = sensorManager
+				.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        // Resuming the periodic location updates
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
+		heading = (TextView) findViewById(R.id.heading);
+		compass = (ImageView) findViewById(R.id.compass);
+		ainola = (ImageView) findViewById(R.id.ainola);
+		symphonyNr = (TextView) findViewById(R.id.symphony_nr);
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        // to save battery
-        sensorManager.unregisterListener(this, accelerometer);
-        sensorManager.unregisterListener(this, magnetometer);
+		if (checkPlayServices()) {
+			buildGoogleApiClient();
+		}
 
-        stopLocationUpdates();
-    }
-    
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
+	}
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+	@Override
+	public void onResume() {
+		super.onResume();
+		isLocationServiceEnabled();
 
-    @Override
-    public void onAccuracyChanged(Sensor arg0, int arg1) {
-        // no need
-    }
+		sensorManager.registerListener(this, accelerometer,
+				SensorManager.SENSOR_DELAY_NORMAL);
+		sensorManager.registerListener(this, magnetometer,
+				SensorManager.SENSOR_DELAY_NORMAL);
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-    }
+		checkPlayServices();
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
+		if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+			startLocationUpdates();
+		}
+	}
 
-        if (event.sensor == accelerometer) {
-            System.arraycopy(event.values, 0, mLastAccelerometer, 0,
-                    event.values.length);
-            mLastAccelerometerSet = true;
-        } else if (event.sensor == magnetometer) {
-            System.arraycopy(event.values, 0, mLastMagnetometer, 0,
-                    event.values.length);
-            mLastMagnetometerSet = true;
-        }
-        if (mLastAccelerometerSet && mLastMagnetometerSet) {
-            
-                SensorManager.getRotationMatrix(temporaryRotationMatrix, null, mLastAccelerometer, mLastMagnetometer);
+	@Override
+	public void onPause() {
+		super.onPause();
+		sensorManager.unregisterListener(this, accelerometer);
+		sensorManager.unregisterListener(this, magnetometer);
 
-                int screenRotation = getWindowManager().getDefaultDisplay().getRotation();
-                int axisX, axisY;
-                boolean isUpSideDown = mLastAccelerometer[2] < 0;
-                switch (screenRotation) {
-                
-                    case Surface.ROTATION_0:
-                        axisX = (isUpSideDown ? SensorManager.AXIS_MINUS_X : SensorManager.AXIS_X);
-                        axisY = (Math.abs(mLastAccelerometer[1]) > 6.0f ? 
-                                (isUpSideDown ? SensorManager.AXIS_MINUS_Z : SensorManager.AXIS_Z) :
-                                (isUpSideDown ? SensorManager.AXIS_MINUS_Y : SensorManager.AXIS_Y));
-                        break;
-                    case Surface.ROTATION_90:
-                        axisX = (isUpSideDown ? SensorManager.AXIS_MINUS_Y : SensorManager.AXIS_Y);
-                        axisY = (Math.abs(mLastAccelerometer[0]) > 6.0f ? 
-                                (isUpSideDown ? SensorManager.AXIS_Z : SensorManager.AXIS_MINUS_Z) :
-                                (isUpSideDown ? SensorManager.AXIS_X : SensorManager.AXIS_MINUS_X));
-                        break;
-                    case  Surface.ROTATION_180:
-                        axisX = (isUpSideDown ? SensorManager.AXIS_X : SensorManager.AXIS_MINUS_X);
-                        axisY = (Math.abs(mLastAccelerometer[1]) > 6.0f ? 
-                                (isUpSideDown ? SensorManager.AXIS_Z : SensorManager.AXIS_MINUS_Z) :
-                                (isUpSideDown ? SensorManager.AXIS_Y : SensorManager.AXIS_MINUS_Y));
-                        break;
-                    case Surface.ROTATION_270:
-                        axisX = (isUpSideDown ? SensorManager.AXIS_Y : SensorManager.AXIS_MINUS_Y);
-                        axisY = (Math.abs(mLastAccelerometer[0]) > 6.0f ? 
-                                (isUpSideDown ? SensorManager.AXIS_MINUS_Z : SensorManager.AXIS_Z) :
-                                (isUpSideDown ? SensorManager.AXIS_MINUS_X : SensorManager.AXIS_X));
-                        break;
-                    default:
-                        axisX = (isUpSideDown ? SensorManager.AXIS_MINUS_X : SensorManager.AXIS_X);
-                        axisY = (isUpSideDown ? SensorManager.AXIS_MINUS_Y : SensorManager.AXIS_Y);
-                }
+		stopLocationUpdates();
+	}
 
-               
-                SensorManager.remapCoordinateSystem(temporaryRotationMatrix, axisX, axisY, rotationMatrix);
-                SensorManager.getOrientation(rotationMatrix, orientationData);
-                float azimuthInRadians = orientationData[0];
-            
-            //Log.i("Rad:" + azimuthInRadians, "Degree: " + Math.toDegrees(azimuthInRadians));
-            float degree = (float) (Math.toDegrees(azimuthInRadians) + 360) % 360;
-            
-            int displayHeading = Math.round(degree);
-            heading.setText(Integer.toString(displayHeading) + " °");
+	@Override
+	public void onAccuracyChanged(Sensor arg0, int arg1) {
+		// no need
+	}
 
-            RotateAnimation animation = new RotateAnimation(currentDegree,
-                    -degree, Animation.RELATIVE_TO_SELF, 0.5f,
-                    Animation.RELATIVE_TO_SELF, 0.5f);
-            animation.setDuration(210);
-            animation.setFillAfter(true);
-            compass.startAnimation(animation);
-            currentDegree = -degree;
-            updateSongNumber(displayHeading);
-            //angleBetweenAinolaAndCurrentLocation = calculateAngleToAinola();
-            //animateAinolaNeedle();
-        }
-        
-    }
+	@Override
+	protected void onStart() {
+		super.onStart();
+		if (mGoogleApiClient != null) {
+			mGoogleApiClient.connect();
+		}
+	}
 
+	@Override
+	public void onSensorChanged(SensorEvent event) {
 
+		if (event.sensor == accelerometer) {
+			System.arraycopy(event.values, 0, mLastAccelerometer, 0,
+					event.values.length);
+			mLastAccelerometerSet = true;
+		} else if (event.sensor == magnetometer) {
+			System.arraycopy(event.values, 0, mLastMagnetometer, 0,
+					event.values.length);
+			mLastMagnetometerSet = true;
+		}
+		if (mLastAccelerometerSet && mLastMagnetometerSet) {
 
-    protected void startLocationUpdates() {
-        LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, this);
-    }
+			SensorManager.getRotationMatrix(temporaryRotationMatrix, null,
+					mLastAccelerometer, mLastMagnetometer);
 
-    protected void stopLocationUpdates() {
-        if (mGoogleApiClient != null) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(
-                    mGoogleApiClient, this);
-        }
-    }
+			int screenRotation = getWindowManager().getDefaultDisplay()
+					.getRotation();
+			int axisX, axisY;
+			boolean isUpSideDown = mLastAccelerometer[2] < 0;
+			switch (screenRotation) {
 
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setSmallestDisplacement(100); // 100 meters
-    
-    }
+			case Surface.ROTATION_0:
+				axisX = (isUpSideDown ? SensorManager.AXIS_MINUS_X
+						: SensorManager.AXIS_X);
+				axisY = (Math.abs(mLastAccelerometer[1]) > 6.0f ? (isUpSideDown ? SensorManager.AXIS_MINUS_Z
+						: SensorManager.AXIS_Z)
+						: (isUpSideDown ? SensorManager.AXIS_MINUS_Y
+								: SensorManager.AXIS_Y));
+				break;
+			case Surface.ROTATION_90:
+				axisX = (isUpSideDown ? SensorManager.AXIS_MINUS_Y
+						: SensorManager.AXIS_Y);
+				axisY = (Math.abs(mLastAccelerometer[0]) > 6.0f ? (isUpSideDown ? SensorManager.AXIS_Z
+						: SensorManager.AXIS_MINUS_Z)
+						: (isUpSideDown ? SensorManager.AXIS_X
+								: SensorManager.AXIS_MINUS_X));
+				break;
+			case Surface.ROTATION_180:
+				axisX = (isUpSideDown ? SensorManager.AXIS_X
+						: SensorManager.AXIS_MINUS_X);
+				axisY = (Math.abs(mLastAccelerometer[1]) > 6.0f ? (isUpSideDown ? SensorManager.AXIS_Z
+						: SensorManager.AXIS_MINUS_Z)
+						: (isUpSideDown ? SensorManager.AXIS_Y
+								: SensorManager.AXIS_MINUS_Y));
+				break;
+			case Surface.ROTATION_270:
+				axisX = (isUpSideDown ? SensorManager.AXIS_Y
+						: SensorManager.AXIS_MINUS_Y);
+				axisY = (Math.abs(mLastAccelerometer[0]) > 6.0f ? (isUpSideDown ? SensorManager.AXIS_MINUS_Z
+						: SensorManager.AXIS_Z)
+						: (isUpSideDown ? SensorManager.AXIS_MINUS_X
+								: SensorManager.AXIS_X));
+				break;
+			default:
+				axisX = (isUpSideDown ? SensorManager.AXIS_MINUS_X
+						: SensorManager.AXIS_X);
+				axisY = (isUpSideDown ? SensorManager.AXIS_MINUS_Y
+						: SensorManager.AXIS_Y);
+			}
 
-    private void togglePeriodicLocationUpdates() {
-        if (!mRequestingLocationUpdates) {
-            mRequestingLocationUpdates = true;
-            startLocationUpdates();
-            
-        } else {
-            mRequestingLocationUpdates = false;
-            stopLocationUpdates();
-        }
-    }
+			SensorManager.remapCoordinateSystem(temporaryRotationMatrix, axisX,
+					axisY, rotationMatrix);
+			
+			SensorManager.getOrientation(rotationMatrix, orientationData);
+			float azimuthInRadians = orientationData[0];
 
-    private void hideStatusBar() {
-        
-    }
+			float degree = (float) (Math.toDegrees(azimuthInRadians) + 360) % 360;
 
-    private void updateSongNumber(float currentDegree) {
-        String oldSongNr = getSongNr();
-        String currentSongNr = Integer.toString(calculateCompassSector(currentDegree));
-        if (!currentSongNr.equals(oldSongNr)) {
-            symphonyNr.setText(currentSongNr);
-            currentSongNr = oldSongNr;
-        }
-    }
+			int displayHeading = Math.round(degree);
+			heading.setText(Integer.toString(displayHeading) + " °");
 
-    private String getSongNr() {
-        return symphonyNr != null ? symphonyNr.getText().toString() : "1";
-    }
+			RotateAnimation animation = new RotateAnimation(currentDegree,
+					-degree, Animation.RELATIVE_TO_SELF, 0.5f,
+					Animation.RELATIVE_TO_SELF, 0.5f);
+			animation.setDuration(210);
+			animation.setFillAfter(true);
+			compass.startAnimation(animation);
+			currentDegree = -degree;
+			updateSongNumber(displayHeading);
+			angleBetweenAinolaAndCurrentLocation = calculateAngleToAinola();
+			animateAinolaNeedle();
+		}
 
-    private int calculateCompassSector(float heading) {
-        float sectorMin = 0;
-        float sectorMax = 23;
-        if (heading > 337 && heading < sectorMax) {
-            return 1;
-        }
-        sectorMin = sectorMax;
-        sectorMax = sectorMin + 45;
-        for (int sector = 2; sector <= 8; sector++) {
-            if (sectorMax < 360 && heading > sectorMin && heading < sectorMax) {
-                return sector;
-            }
-            sectorMin = sectorMax;
-            sectorMax = sectorMin + 45;
-        }
-        return 1;
-    }
+	}
 
-    private float calculateAngleToAinola() {
-        double latitude = userlatitude * Math.PI / 180.0;
-        double longitude = userlongitude * Math.PI / 180.0;
-        double ainolaLatitude = 60.458295 * Math.PI / 180.0;
-        double ainolaLongitude = 25.087905 * Math.PI / 180.0;
+	protected void startLocationUpdates() {
+		LocationServices.FusedLocationApi.requestLocationUpdates(
+				mGoogleApiClient, mLocationRequest, this);
+	}
 
-        double diffLongitude = ainolaLongitude - longitude;
-        double y = Math.sin(diffLongitude) * Math.cos(ainolaLongitude);
-        double x = Math.cos(latitude) * Math.sin(ainolaLatitude)
-                - Math.sin(latitude) * Math.cos(ainolaLatitude)
-                * Math.cos(diffLongitude);
-        double radians = Math.atan2(y, x);
-        if (radians < 0.0) {
-            radians += 2 * Math.PI;
-        }
-        return (float) radians;
-    }
+	protected void stopLocationUpdates() {
+		LocationServices.FusedLocationApi.removeLocationUpdates(
+				mGoogleApiClient, this);
+	}
 
-    private void animateAinolaNeedle() {
-        float direction = currentDegree;
-         Log.i("MainActivity", "Ainola current degree:" + direction);
-        if (direction > 180) {
-            direction = 360 - direction;
-        } else {
-            direction = 0 - direction;
-        }
+	protected void createLocationRequest() {
+		mLocationRequest = new LocationRequest();
+		mLocationRequest.setInterval(10000);
+		mLocationRequest.setFastestInterval(60000);
+		mLocationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
 
-        float degree = (float) (direction * Math.PI / 180.0)
-                + angleBetweenAinolaAndCurrentLocation;
-        Log.i("MainActivity", "Ainola new direction:" + degree);
-        RotateAnimation animation = new RotateAnimation(currentDegree, -degree,
-                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,
-                0.5f);
-        animation.setDuration(60);
-        animation.setFillAfter(true);
-        ainola.startAnimation(animation);
-    }
+	}
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API).build();
-    }
+	private void updateSongNumber(float currentDegree) {
+		String oldSongNr = getSongNr();
+		String currentSongNr = Integer
+				.toString(calculateCompassSector(currentDegree));
+		if (!currentSongNr.equals(oldSongNr)) {
+			symphonyNr.setText(currentSongNr);
+			currentSongNr = oldSongNr;
+		}
+	}
 
-    @Override
-    public void onConnectionSuspended(int cause) {
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-        
-    }
+	private String getSongNr() {
+		return symphonyNr != null ? symphonyNr.getText().toString() : "1";
+	}
 
-    @Override
-    public void onConnectionFailed(ConnectionResult result) {
-        Log.i(TAG, "Could not connect to Location service.");
-    }
+	private int calculateCompassSector(float heading) {
+		float sectorMin = 0;
+		float sectorMax = 23;
+		if (heading > 337 && heading < sectorMax) {
+			return 1;
+		}
+		sectorMin = sectorMax;
+		sectorMax = sectorMin + 45;
+		for (int sector = 2; sector <= 8; sector++) {
+			if (sectorMax < 360 && heading > sectorMin && heading < sectorMax) {
+				return sector;
+			}
+			sectorMin = sectorMax;
+			sectorMax = sectorMin + 45;
+		}
+		return 1;
+	}
 
-    @Override
-    public void onLocationChanged(Location location) {
-        // Assign the new location
-        mLastLocation = location;
-        // Displaying the new location on UI
-        getLocation();
-    }
+	private float calculateAngleToAinola() {
+		double latitude = userlatitude * Math.PI / 180.0;
+		double longitude = userlongitude * Math.PI / 180.0;
+		double ainolaLatitude = 60.458295 * Math.PI / 180.0;
+		double ainolaLongitude = 25.087905 * Math.PI / 180.0;
 
-    @Override
-    public void onConnected(Bundle arg0) {
-        // Once connected with google api, get the location
-        getLocation();
-        if (mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
+		double diffLongitude = ainolaLongitude - longitude;
+		double y = Math.sin(diffLongitude) * Math.cos(ainolaLongitude);
+		double x = Math.cos(latitude) * Math.sin(ainolaLatitude)
+				- Math.sin(latitude) * Math.cos(ainolaLatitude)
+				* Math.cos(diffLongitude);
+		double radians = Math.atan2(y, x);
+		if (radians < 0.0) {
+			radians += 2 * Math.PI;
+		}
+		return (float) radians;
+	}
 
-    /**
-     * Method to verify google play services on the device
-     * */
-    private boolean checkPlayServices() {
-        int resultCode = GooglePlayServicesUtil
-                .isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, this, 1000)
-                        .show();
-            } else {
-                Toast.makeText(getApplicationContext(), "Laite ei tuettu.",
-                        Toast.LENGTH_LONG).show();
-                finish();
-            }
-            return false;
-        }
-        return true;
-    }
+	private void animateAinolaNeedle() {
+		float direction = currentDegree;
+		Log.i("MainActivity", "Ainola current degree:" + direction);
+		if (direction > 180) {
+			direction = 360 - direction;
+		} else {
+			direction = 0 - direction;
+		}
 
-    private void getLocation() {
-        if (mGoogleApiClient != null) {
-            mLastLocation = LocationServices.FusedLocationApi
-                    .getLastLocation(mGoogleApiClient);
-            if (mLastLocation != null) {
-                userlatitude = mLastLocation.getLatitude();
-                userlongitude = mLastLocation.getLongitude();
-            }
-        }
-    }
-     public boolean isLocationServiceEnabled() {
-         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-             ainola.setVisibility(View.VISIBLE);
-             return true;
-         } else {
-             ainola.setVisibility(View.INVISIBLE);
-             return false;
-         }
-     }
+		float degree = (float) (direction * Math.PI / 180.0)
+				+ angleBetweenAinolaAndCurrentLocation;
+		Log.i("MainActivity", "Ainola new direction:" + degree);
+		RotateAnimation animation = new RotateAnimation(currentDegree, -degree,
+				Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,
+				0.5f);
+		animation.setDuration(60);
+		animation.setFillAfter(true);
+		ainola.startAnimation(animation);
+	}
+
+	protected synchronized void buildGoogleApiClient() {
+		mGoogleApiClient = new GoogleApiClient.Builder(this)
+				.addConnectionCallbacks(this)
+				.addOnConnectionFailedListener(this)
+				.addApi(LocationServices.API).build();
+	}
+
+	@Override
+	public void onConnectionSuspended(int cause) {
+		if (mGoogleApiClient != null) {
+			mGoogleApiClient.connect();
+		}
+
+	}
+
+	@Override
+	public void onConnectionFailed(ConnectionResult result) {
+		Log.i(TAG, "Could not connect to Location service.");
+	}
+
+	@Override
+	public void onLocationChanged(Location location) {
+		mLastLocation = location;
+	}
+
+	@Override
+	public void onConnected(Bundle arg0) {
+		mLastLocation = LocationServices.FusedLocationApi
+				.getLastLocation(mGoogleApiClient);
+		if (mLastLocation != null) {
+			userlatitude = mLastLocation.getLatitude();
+			userlongitude = mLastLocation.getLongitude();
+		}
+	}
+
+	/**
+	 * Method to verify google play services on the device
+	 * */
+	private boolean checkPlayServices() {
+		int resultCode = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(this);
+		if (resultCode != ConnectionResult.SUCCESS) {
+			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+				GooglePlayServicesUtil.getErrorDialog(resultCode, this, 1000)
+						.show();
+			} else {
+				Toast.makeText(getApplicationContext(), "Laite ei tuettu.",
+						Toast.LENGTH_LONG).show();
+				finish();
+			}
+			return false;
+		}
+		return true;
+	}
+
+	public boolean isLocationServiceEnabled() {
+		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || 
+				locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+			ainola.setVisibility(View.VISIBLE);
+			return true;
+		} else {
+			ainola.setVisibility(View.INVISIBLE);
+			return false;
+		}
+	}
 }
