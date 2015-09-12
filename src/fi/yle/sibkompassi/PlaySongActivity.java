@@ -10,22 +10,27 @@ import android.widget.MediaController;
 import android.widget.VideoView;
 
 public class PlaySongActivity extends Activity {
-	VideoView videoView;
+	private VideoView videoView;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		 Log.i("PlaySongActivity", "PlaySongActivity — onCreate");
+		Log.i("PlaySongActivity", "PlaySongActivity — onCreate");
 		super.onCreate(savedInstanceState);
-	    setContentView(R.layout.activity_play_song);
-		
+		setContentView(R.layout.activity_play_song);
+
 		// Get the song nr from the intent
-	    Intent intent = getIntent();
-	    String songNr = intent.getStringExtra(MainActivity.EXTRA_SONG);
-	    Uri video = Uri.parse("android.resource://" + getPackageName() + "/raw/sibbe_"+ songNr);
-	    videoView = (VideoView) findViewById(R.id.videoview);
-	    videoView.setVideoURI(video);
-	    videoView.setMediaController(new MediaController(this));
-	    videoView.start();
-	    videoView.requestFocus();	
+		Intent intent = getIntent();
+		String songNr = intent.getStringExtra(MainActivity.EXTRA_SONG);
+
+		final String AUTHORITY = "fi.yle.sibkompassi.extension.ZipFileContentProvider";
+		final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
+
+		Uri video = Uri.parse(CONTENT_URI + "/" + "sibbe_" + songNr);
+		videoView = (VideoView) findViewById(R.id.videoview);
+		videoView.setVideoURI(video);
+		videoView.setMediaController(new MediaController(this));
+		videoView.start();
+		videoView.requestFocus();
 	}
 
 	@Override
@@ -40,3 +45,4 @@ public class PlaySongActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 }
+
