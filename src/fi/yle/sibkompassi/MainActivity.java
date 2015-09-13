@@ -216,7 +216,8 @@ public class MainActivity extends Activity implements SensorEventListener,
 			compass.startAnimation(animation);
 			currentDegree = -degree;
 			updateSongNumber(displayHeading);
-			animateAinolaNeedle();
+			if (mLastLocation != null)
+				animateAinolaNeedle();
 		}
 
 	}
@@ -350,9 +351,11 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	public boolean isLocationServiceEnabled() {
 		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		mLastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-		if (mLastLocation == null)
-			mLastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		if (locationManager != null) {
+			mLastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+			if (mLastLocation == null)
+				mLastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		}
 		if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || 
 				locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 			ainola.setVisibility(View.VISIBLE);
