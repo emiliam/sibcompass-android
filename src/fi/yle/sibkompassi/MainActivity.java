@@ -15,7 +15,6 @@ import android.view.Surface;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,13 +57,12 @@ public class MainActivity extends Activity implements SensorEventListener,
 	private float[] temporaryRotationMatrix = new float[9];
 	private float[] rotationMatrix = new float[9];
 	private float[] orientationData = new float[3];
-	private float angleBetweenAinolaAndCurrentLocation;
 	private ImageView ainola;
 	private GoogleApiClient mGoogleApiClient;
-	private double userlatitude = 0;
-	private double userlongitude = 0;
+	
 	private Location mLastLocation;
 	private LocationRequest mLocationRequest;
+	float lastAinolaDegree = 0;
 
 	public void playSong(View view) {
 		Intent intent = new Intent(this, PlaySongActivity.class);
@@ -104,9 +102,9 @@ public class MainActivity extends Activity implements SensorEventListener,
 		isLocationServiceEnabled();
 
 		sensorManager.registerListener(this, accelerometer,
-				SensorManager.SENSOR_DELAY_NORMAL);
+				60000);
 		sensorManager.registerListener(this, magnetometer,
-				SensorManager.SENSOR_DELAY_NORMAL);
+				60000);
 
 		checkPlayServices();
 
@@ -218,7 +216,6 @@ public class MainActivity extends Activity implements SensorEventListener,
 			compass.startAnimation(animation);
 			currentDegree = -degree;
 			updateSongNumber(displayHeading);
-			angleBetweenAinolaAndCurrentLocation = calculateAngleToAinola();
 			animateAinolaNeedle();
 		}
 
@@ -274,42 +271,27 @@ public class MainActivity extends Activity implements SensorEventListener,
 		return 1;
 	}
 
-	private float calculateAngleToAinola() {
-		double latitude = userlatitude * Math.PI / 180.0;
-		double longitude = userlongitude * Math.PI / 180.0;
-		double ainolaLatitude = 60.458295 * Math.PI / 180.0;
-		double ainolaLongitude = 25.087905 * Math.PI / 180.0;
+	private void animateAinolaNeedle() {		
+		Location ainolaLocation = new Location("Ainola") ;
+		ainolaLocation.setLatitude(60.458295);
+		ainolaLocation.setLongitude(25.087905);
 
-		double diffLongitude = ainolaLongitude - longitude;
-		double y = Math.sin(diffLongitude) * Math.cos(ainolaLongitude);
-		double x = Math.cos(latitude) * Math.sin(ainolaLatitude)
-				- Math.sin(latitude) * Math.cos(ainolaLatitude)
-				* Math.cos(diffLongitude);
-		double radians = Math.atan2(y, x);
-		if (radians < 0.0) {
-			radians += 2 * Math.PI;
-		}
-		return (float) radians;
-	}
-
-	private void animateAinolaNeedle() {
-		float direction = currentDegree;
-		Log.i("MainActivity", "Ainola current degree:" + direction);
+		float direction = (float) (-currentDegree * Math.PI / 180.0) 
+				+ mLastLocation.bearingTo(ainolaLocation);	
 		if (direction > 180) {
 			direction = 360 - direction;
 		} else {
 			direction = 0 - direction;
 		}
-
-		float degree = (float) (direction * Math.PI / 180.0)
-				+ angleBetweenAinolaAndCurrentLocation;
-		Log.i("MainActivity", "Ainola new direction:" + degree);
-		RotateAnimation animation = new RotateAnimation(currentDegree, -degree,
+		
+		RotateAnimation animation = new RotateAnimation(currentDegree, -direction,
 				Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,
 				0.5f);
-		animation.setDuration(60);
+		animation.setDuration(20000);
 		animation.setFillAfter(true);
 		ainola.startAnimation(animation);
+		lastAinolaDegree = direction;
+	
 	}
 
 	protected synchronized void buildGoogleApiClient() {
@@ -334,17 +316,16 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	@Override
 	public void onLocationChanged(Location location) {
-		mLastLocation = location;
+		if (location != null)
+			mLastLocation = location;
 	}
 
 	@Override
 	public void onConnected(Bundle arg0) {
-		mLastLocation = LocationServices.FusedLocationApi
+		Location locationChanged = LocationServices.FusedLocationApi
 				.getLastLocation(mGoogleApiClient);
-		if (mLastLocation != null) {
-			userlatitude = mLastLocation.getLatitude();
-			userlongitude = mLastLocation.getLongitude();
-		}
+		 if (locationChanged != null)
+			 mLastLocation = locationChanged;
 	}
 
 	/**
@@ -369,6 +350,9 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	public boolean isLocationServiceEnabled() {
 		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		mLastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+		if (mLastLocation == null)
+			mLastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 		if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || 
 				locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 			ainola.setVisibility(View.VISIBLE);
