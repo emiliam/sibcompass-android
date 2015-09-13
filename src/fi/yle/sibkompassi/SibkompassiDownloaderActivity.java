@@ -47,11 +47,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.zip.CRC32;
 
-/**
- * This is Sibkompassi code for a project built against the downloader library. It
- * implements the IDownloaderClient that the client marshaler will talk to as
- * messages are delivered from the DownloaderService.
- */
 public class SibkompassiDownloaderActivity extends Activity implements IDownloaderClient {
     private static final String LOG_TAG = "LVLDownloader";
     private ProgressBar mPB;
@@ -118,9 +113,9 @@ public class SibkompassiDownloaderActivity extends Activity implements IDownload
     private static final XAPKFile[] xAPKS = {
             new XAPKFile(
                     true, // true signifies a main file
-                    3, // the version of the APK that the file was uploaded
+                    1, // the version of the APK that the file was uploaded
                        // against
-                    664451000L // the length of the file in bytes
+                    342282742 // the length of the file in bytes
             )           
     };
 
@@ -138,8 +133,10 @@ public class SibkompassiDownloaderActivity extends Activity implements IDownload
     boolean expansionFilesDelivered() {
         for (XAPKFile xf : xAPKS) {
             String fileName = Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
+            Log.i("expansionFilesDelivered", "fileName: " + fileName);
             if (!Helpers.doesFileExist(this, fileName, xf.mFileSize, false))
                 return false;
+            
         }
         return true;
     }
@@ -376,19 +373,15 @@ public class SibkompassiDownloaderActivity extends Activity implements IDownload
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        /**
-         * Both downloading and validation make use of the "download" UI
-         */
-        initializeDownloadUI();
-
+        
+        //initializeDownloadUI();
         /**
          * Before we do anything, are the files we expect already here and
          * delivered (presumably by Market) For free titles, this is probably
          * worth doing. (so no Market request is necessary)
          */
         if (!expansionFilesDelivered()) {
-
+            Log.i("Expansion files", "found");
             try {
                 Intent launchIntent = SibkompassiDownloaderActivity.this
                         .getIntent();
@@ -405,8 +398,7 @@ public class SibkompassiDownloaderActivity extends Activity implements IDownload
                     }
                 }
 
-                // Build PendingIntent used to open this activity from
-                // Notification
+                // Build PendingIntent used to open this activity from Notification
                 PendingIntent pendingIntent = PendingIntent.getActivity(
                         SibkompassiDownloaderActivity.this,
                         0, intentToLaunchThisActivityFromNotification,
@@ -414,23 +406,24 @@ public class SibkompassiDownloaderActivity extends Activity implements IDownload
                 // Request to start the download
                 int startResult = DownloaderClientMarshaller.startDownloadServiceIfRequired(this,
                         pendingIntent, DownloaderService.class);
-
-                if (startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED) {
+Log.i("STart download", "4 = " + startResult);                
+				if (startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED) {
                     // The DownloaderService has started downloading the files,
                     // show progress
                     initializeDownloadUI();
                     return;
-                } // otherwise, download not needed so we fall through to
-                  // starting the movie
+                } 
             } catch (NameNotFoundException e) {
                 Log.e(LOG_TAG, "Cannot find own package! MAYDAY!");
                 e.printStackTrace();
             }
 
         } else {
-            validateXAPKZipFiles();
+        	validateXAPKZipFiles();
         }
-
+        Log.i("FOOO", "BAR");
+        Intent compassActivity = new Intent(getApplicationContext(), MainActivity.class);
+    	startActivity(compassActivity);
     }
 
     /**
@@ -468,9 +461,7 @@ public class SibkompassiDownloaderActivity extends Activity implements IDownload
     }
 
     /**
-     * The download state should trigger changes in the UI --- it may be useful
-     * to show the state as being indeterminate at times. This Sibkompassi can be
-     * considered a guideline.
+     * The download state should trigger changes in the UI
      */
     @Override
     public void onDownloadStateChanged(int newState) {

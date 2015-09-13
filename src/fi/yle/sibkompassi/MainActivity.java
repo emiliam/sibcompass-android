@@ -27,6 +27,7 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.vending.expansion.downloader.Helpers;
 
 /**
  * A compass which finds your way to Ainola, home of Siblius in the honor of his
@@ -39,7 +40,7 @@ import com.google.android.gms.location.LocationServices;
  */
 public class MainActivity extends Activity implements SensorEventListener,
 		ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
-	
+
 	private static final String TAG = "MainActivity";
 	public final static String EXTRA_SONG = "fi.yle.sibkompassi.SONG";
 
@@ -59,10 +60,12 @@ public class MainActivity extends Activity implements SensorEventListener,
 	private float[] orientationData = new float[3];
 	private ImageView ainola;
 	private GoogleApiClient mGoogleApiClient;
-	
+
 	private Location mLastLocation;
 	private LocationRequest mLocationRequest;
 	float lastAinolaDegree = 0;
+
+	boolean mRequestingLocationUpdates = false;
 
 	public void playSong(View view) {
 		Intent intent = new Intent(this, PlaySongActivity.class);
@@ -75,6 +78,10 @@ public class MainActivity extends Activity implements SensorEventListener,
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		String fileName = Helpers.getExpansionAPKFileName(
+				getApplicationContext(), true, 1);
+		Log.i("MainActivity", "Expansion file found: " + fileName);
 
 		setContentView(R.layout.activity_main);
 
@@ -101,14 +108,10 @@ public class MainActivity extends Activity implements SensorEventListener,
 		super.onResume();
 		isLocationServiceEnabled();
 
-		sensorManager.registerListener(this, accelerometer,
-				60000);
-		sensorManager.registerListener(this, magnetometer,
-				60000);
+		sensorManager.registerListener(this, accelerometer, 60000);
+		sensorManager.registerListener(this, magnetometer, 60000);
 
-		checkPlayServices();
-
-		if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+		if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
 			startLocationUpdates();
 		}
 	}
@@ -199,7 +202,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 			SensorManager.remapCoordinateSystem(temporaryRotationMatrix, axisX,
 					axisY, rotationMatrix);
-			
+
 			SensorManager.getOrientation(rotationMatrix, orientationData);
 			float azimuthInRadians = orientationData[0];
 
@@ -272,27 +275,27 @@ public class MainActivity extends Activity implements SensorEventListener,
 		return 1;
 	}
 
-	private void animateAinolaNeedle() {		
-		Location ainolaLocation = new Location("Ainola") ;
+	private void animateAinolaNeedle() {
+		Location ainolaLocation = new Location("Ainola");
 		ainolaLocation.setLatitude(60.458295);
 		ainolaLocation.setLongitude(25.087905);
 
-		float direction = (float) (-currentDegree * Math.PI / 180.0) 
-				+ mLastLocation.bearingTo(ainolaLocation);	
+		float direction = (float) (-currentDegree * Math.PI / 180.0)
+				+ mLastLocation.bearingTo(ainolaLocation);
 		if (direction > 180) {
 			direction = 360 - direction;
 		} else {
 			direction = 0 - direction;
 		}
-		
-		RotateAnimation animation = new RotateAnimation(currentDegree, -direction,
-				Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,
-				0.5f);
+
+		RotateAnimation animation = new RotateAnimation(currentDegree,
+				-direction, Animation.RELATIVE_TO_SELF, 0.5f,
+				Animation.RELATIVE_TO_SELF, 0.5f);
 		animation.setDuration(20000);
 		animation.setFillAfter(true);
 		ainola.startAnimation(animation);
 		lastAinolaDegree = direction;
-	
+
 	}
 
 	protected synchronized void buildGoogleApiClient() {
@@ -325,8 +328,13 @@ public class MainActivity extends Activity implements SensorEventListener,
 	public void onConnected(Bundle arg0) {
 		Location locationChanged = LocationServices.FusedLocationApi
 				.getLastLocation(mGoogleApiClient);
-		 if (locationChanged != null)
-			 mLastLocation = locationChanged;
+		if (locationChanged != null)
+			mLastLocation = locationChanged;
+
+		if (mRequestingLocationUpdates) {
+			startLocationUpdates();
+		}
+
 	}
 
 	/**
@@ -352,16 +360,21 @@ public class MainActivity extends Activity implements SensorEventListener,
 	public boolean isLocationServiceEnabled() {
 		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		if (locationManager != null) {
-			mLastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+			mLastLocation = locationManager
+					.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 			if (mLastLocation == null)
-				mLastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				mLastLocation = locationManager
+						.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 		}
-		if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || 
-				locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+		if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+				|| locationManager
+						.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 			ainola.setVisibility(View.VISIBLE);
+			mRequestingLocationUpdates = true;
 			return true;
 		} else {
 			ainola.setVisibility(View.INVISIBLE);
+			mRequestingLocationUpdates = false;
 			return false;
 		}
 	}
