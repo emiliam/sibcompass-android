@@ -105,15 +105,21 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	@Override
 	public void onResume() {
-		super.onResume();
-		isLocationServiceEnabled();
-
+	
+		if (isLocationServiceEnabled()) {
+			Log.i("Location service", "enabled");
+			ainola.setVisibility(View.VISIBLE);
+		} else	{
+			Log.i("Location service", "disabled");
+			ainola.setVisibility(View.INVISIBLE);
+		}
 		sensorManager.registerListener(this, accelerometer, 60000);
 		sensorManager.registerListener(this, magnetometer, 60000);
 
-		if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
+		if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
 			startLocationUpdates();
 		}
+		super.onResume();
 	}
 
 	@Override
@@ -226,6 +232,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 	}
 
 	protected void startLocationUpdates() {
+		createLocationRequest();
 		LocationServices.FusedLocationApi.requestLocationUpdates(
 				mGoogleApiClient, mLocationRequest, this);
 	}
@@ -359,23 +366,27 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	public boolean isLocationServiceEnabled() {
 		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		
 		if (locationManager != null) {
 			mLastLocation = locationManager
 					.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 			if (mLastLocation == null)
 				mLastLocation = locationManager
 						.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-		}
-		if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-				|| locationManager
-						.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-			ainola.setVisibility(View.VISIBLE);
-			mRequestingLocationUpdates = true;
-			return true;
+
+			if (locationManager
+					.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+					|| locationManager
+							.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+				mRequestingLocationUpdates = true;
+			} else {
+				mRequestingLocationUpdates = false;
+			}
 		} else {
-			ainola.setVisibility(View.INVISIBLE);
 			mRequestingLocationUpdates = false;
-			return false;
 		}
+	
+Log.i("fooo", "bar: " + mRequestingLocationUpdates);
+		return mRequestingLocationUpdates;
 	}
 }
