@@ -1,39 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  	android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/black"
     android:paddingLeft="20dp"
-    android:paddingRight="20dp" 
-    android:background="@android:color/black" >
-	  
-    <ImageView android:id="@+id/compass"
+    android:paddingRight="20dp" >
+
+    <ImageView
+        android:id="@+id/compass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
         android:contentDescription="@string/compass_desc"
+        android:src="@drawable/compass" />
+
+    <ImageView
+        android:id="@+id/ainola"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
         android:layout_gravity="center"
         android:layout_marginTop="50dp"
-        android:layout_centerHorizontal="true"
-        android:src="@drawable/compass"/>
-  
-    <ImageView android:id="@+id/ainola"
-        android:contentDescription="@string/ainola_desc"    
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="50dp"
-        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/ainola_desc"
         android:src="@drawable/ainola" />
-		<TextView
-		    	android:id="@+id/heading"
-		    	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_marginTop="20dp"
-        	android:layout_marginBottom="20dp"
-        	android:layout_centerInParent="true"
-        	android:textSize="20sp"
-        	android:text="0 °"
-        	android:layout_below="@id/compass"
-        	android:textColor="@android:color/white"/>
+
+    <TextView
+        android:id="@+id/heading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/compass"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="20dp"
+        android:text="0 °"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
     <TextView
         android:id="@+id/symphony"
         android:layout_width="wrap_content"
@@ -41,29 +45,51 @@
         android:layout_below="@+id/heading"
         android:layout_centerInParent="true"
         android:text="@string/symphony_name"
-        android:textColor="@android:color/white" 
+        android:textColor="@android:color/white"
         android:textSize="30sp" />
-     <TextView
+
+    <TextView
         android:id="@+id/symphony_nr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/heading"
-        android:layout_toRightOf="@+id/symphony"
         android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@+id/symphony"
         android:text="1"
         android:textColor="@android:color/white"
         android:textSize="30sp" />
-    
+
     <ImageButton
-        	android:id="@+id/play"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_marginTop="20dp"
-          android:layout_centerHorizontal="true"
-          android:layout_below="@+id/symphony"
-          android:background="@android:color/black"
-        	android:src="@drawable/play" 
-        	android:onClick="playSong"/>
+        android:id="@+id/play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/symphony"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:background="@android:color/black"
+        android:onClick="playSong"
+        android:src="@drawable/play" 
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dip"
+        android:background="#AA000000"
+        android:padding="12dip"
+        android:text="@string/downloading"
+        android:textColor="#ffffffff"
+        android:visibility="gone"/>
+
+    <ProgressBar
+        android:id="@+id/progress"
+        style="@android:style/Widget.ProgressBar.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="12dip"
+        android:layout_marginRight="5dp"
+        android:layout_toRightOf="@+id/loading"
+        android:visibility="gone"/>
 
 </RelativeLayout>
-    

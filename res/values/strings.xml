@@ -9,16 +9,6 @@
     <string name="compass_desc">Compass</string>
     <string name="ainola_desc">Ainola</string>
     <string name="title_activity_play_song">PlaySongActivity</string>
-    <string name="text_paused_cellular">Haluatko laittaa latauksen operaattorisi verkon yli</string>
-    <string name="text_paused_cellular_2">If you choose not to enable downloading over cellular connections, the download will automatically resume when wi-fi is available.</string>
-    <string name="text_button_resume_cellular">Resume download</string>
-    <string name="text_button_wifi_settings">Verkko asetukset</string>
-    <string name="text_verifying_download">Ladataan</string>
-    <string name="text_validation_complete">Tiedostot tarkastettu. Valitse OK.</string>
-    <string name="text_validation_failed">Tiedostojen validointi epäonnistui.</string>
-    <string name="text_button_pause">Pysäytä lataus</string>
-    <string name="text_button_resume">Palaa lataukseen</string>
-    <string name="text_button_cancel_verify">Peru tarkastus</string>
-    <string name="text_button_cancel">Peru</string>
+    <string name="downloading">Odota, videot latautuvat...</string>
     
 </resources>

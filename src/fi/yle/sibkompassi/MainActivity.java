@@ -1,8 +1,10 @@
 package fi.yle.sibkompassi;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,12 +12,15 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Messenger;
 import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,7 +32,15 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
+import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;
+import com.google.android.vending.expansion.downloader.DownloaderServiceMarshaller;
 import com.google.android.vending.expansion.downloader.Helpers;
+import com.google.android.vending.expansion.downloader.IDownloaderClient;
+import com.google.android.vending.expansion.downloader.IDownloaderService;
+import com.google.android.vending.expansion.downloader.IStub;
+
+import fi.yle.sibkompassi.extension.DownloaderService;
 
 /**
  * A compass which finds your way to Ainola, home of Siblius in the honor of his
@@ -39,7 +52,8 @@ import com.google.android.vending.expansion.downloader.Helpers;
  * http://stackoverflow.com/users/4535635/orka.
  */
 public class MainActivity extends Activity implements SensorEventListener,
-		ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
+		ConnectionCallbacks, OnConnectionFailedListener, LocationListener,
+		IDownloaderClient {
 
 	private static final String TAG = "MainActivity";
 	public final static String EXTRA_SONG = "fi.yle.sibkompassi.SONG";
@@ -48,6 +62,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 	private TextView heading;
 	private TextView symphonyNr;
 	private ImageView compass;
+	private ImageButton playButton;
 	private float currentDegree = 0f;
 	private Sensor accelerometer;
 	private Sensor magnetometer;
@@ -60,10 +75,14 @@ public class MainActivity extends Activity implements SensorEventListener,
 	private float[] orientationData = new float[3];
 	private ImageView ainola;
 	private GoogleApiClient mGoogleApiClient;
-
+	private IStub mDownloaderClientStub;
+	private IDownloaderService mRemoteService;
 	private Location mLastLocation;
 	private LocationRequest mLocationRequest;
 	float lastAinolaDegree = 0;
+	private ProgressBar mProgress;
+	private TextView loading;
+	private boolean videosFound = false;
 
 	boolean mRequestingLocationUpdates = false;
 
@@ -78,12 +97,43 @@ public class MainActivity extends Activity implements SensorEventListener,
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		String fileName = Helpers.getExpansionAPKFileName(
-				getApplicationContext(), true, 1);
-		Log.i("MainActivity", "Expansion file found: " + fileName);
-
 		setContentView(R.layout.activity_main);
+		
+		if (expansionFilesDelivered()) {
+			videosFound = true;
+		} else {
+			Log.i("Expansion files", "Not found. Start downloading.");
+			// Build an Intent to start this activity from the Notification
+			Intent notifierIntent = new Intent(this, this.getClass());
+			notifierIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+					| Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+					notifierIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+			int startResult = 0;
+			try {
+				startResult = DownloaderClientMarshaller
+						.startDownloadServiceIfRequired(this, pendingIntent,
+								DownloaderService.class);
+				if (startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED) {
+					mDownloaderClientStub = DownloaderClientMarshaller
+							.CreateStub(this, DownloaderService.class);
+					
+					loading = (TextView) findViewById(R.id.loading);
+					loading.setVisibility(View.VISIBLE);
+					mProgress = (ProgressBar) findViewById(R.id.progress);
+					mProgress.setVisibility(View.VISIBLE);
+					
+				}
+			} catch (NameNotFoundException e) {
+
+				e.printStackTrace();
+			}
+		}
+		startApp();
+	}
+
+	private void startApp() {
 
 		// initialize device sensor to detect changes in heading
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -96,20 +146,26 @@ public class MainActivity extends Activity implements SensorEventListener,
 		compass = (ImageView) findViewById(R.id.compass);
 		ainola = (ImageView) findViewById(R.id.ainola);
 		symphonyNr = (TextView) findViewById(R.id.symphony_nr);
-
+	
 		if (checkPlayServices()) {
 			buildGoogleApiClient();
 		}
-
 	}
 
 	@Override
 	public void onResume() {
-	
+
+		if (null != mDownloaderClientStub) {
+			mDownloaderClientStub.connect(this);
+		}
+		if (videosFound) {
+			playButton = (ImageButton) findViewById(R.id.play);
+			playButton.setVisibility(View.VISIBLE);
+		}
 		if (isLocationServiceEnabled()) {
 			Log.i("Location service", "enabled");
 			ainola.setVisibility(View.VISIBLE);
-		} else	{
+		} else {
 			Log.i("Location service", "disabled");
 			ainola.setVisibility(View.INVISIBLE);
 		}
@@ -129,6 +185,14 @@ public class MainActivity extends Activity implements SensorEventListener,
 		sensorManager.unregisterListener(this, magnetometer);
 
 		stopLocationUpdates();
+	}
+
+	@Override
+	public void onStop() {
+		if (null != mDownloaderClientStub) {
+			mDownloaderClientStub.disconnect(this);
+		}
+		super.onStop();
 	}
 
 	@Override
@@ -366,7 +430,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	public boolean isLocationServiceEnabled() {
 		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		
+
 		if (locationManager != null) {
 			mLastLocation = locationManager
 					.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -385,8 +449,62 @@ public class MainActivity extends Activity implements SensorEventListener,
 		} else {
 			mRequestingLocationUpdates = false;
 		}
-	
-Log.i("fooo", "bar: " + mRequestingLocationUpdates);
+
+		Log.i("fooo", "bar: " + mRequestingLocationUpdates);
 		return mRequestingLocationUpdates;
+	}
+
+	boolean expansionFilesDelivered() {
+		for (XAPKFile xf : xAPKS) {
+			String fileName = Helpers.getExpansionAPKFileName(this, xf.mIsMain,
+					xf.mFileVersion);
+			Log.i("expansionFilesDelivered", "fileName: " + fileName);
+			if (!Helpers.doesFileExist(this, fileName, xf.mFileSize, false))
+				return false;
+
+		}
+		return true;
+	}
+
+	private static class XAPKFile {
+		public final boolean mIsMain;
+		public final int mFileVersion;
+		public final long mFileSize;
+
+		XAPKFile(boolean isMain, int fileVersion, long fileSize) {
+			mIsMain = isMain;
+			mFileVersion = fileVersion;
+			mFileSize = fileSize;
+		}
+	}
+
+	private static final XAPKFile[] xAPKS = { new XAPKFile(true, //true = main file
+			1, // the app version
+			342282742 // length of the zip file with videos in bytes
+	) };
+
+	@Override
+	public void onServiceConnected(Messenger m) {
+		mRemoteService = DownloaderServiceMarshaller.CreateProxy(m);
+		mRemoteService.onClientUpdated(mDownloaderClientStub.getMessenger());
+
+	}
+
+	@Override
+	public void onDownloadStateChanged(int newState) {
+		if (newState == IDownloaderClient.STATE_COMPLETED) {
+			loading.setVisibility(View.GONE);
+			videosFound = true;
+		}
+	}
+
+	@Override
+	public void onDownloadProgress(DownloadProgressInfo progress) {
+		progress.mOverallTotal = progress.mOverallTotal;
+		mProgress.setMax((int) (progress.mOverallTotal >> 8));
+		mProgress.setProgress((int) (progress.mOverallProgress >> 8));
+		loading.setText("Videoita ladataan, " + Long.toString(progress.mOverallProgress * 100
+				/ progress.mOverallTotal)
+				+ "%");
 	}
 }

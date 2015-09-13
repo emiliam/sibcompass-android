@@ -23,25 +23,8 @@
         android:icon="@mipmap/icon"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <!--  activity
-            android:label="@string/app_name"
-            android:name=".SibkompassiDownloaderActivity" >
-            <intent-filter >
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-->
-
-        <!--
-         In order to start the service, it must be uniquely registered with
-         the package manager here. 
-        -->
+     
         <service android:name=".extension.DownloaderService" />
-
-        <!--
-         In order for the alarm manager to contact the downloader script, the receiver
-         must be uniquely registered with the package manager here. 
-        -->
         <receiver android:name=".extension.DonwloaderServiceBroadcastReceiver" />
    
         <provider 
