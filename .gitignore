@@ -1,3 +1,4 @@
+#old values
 bin/*
 *.mp4
 *.class
@@ -5,3 +6,30 @@ bin/*
 *.apk
 .project
 .classpath
+
+.gradle
+/local.properties
+/.idea/workspace.xml
+.DS_Store
+
+log.txt
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
+build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+*.iml
+.idea/

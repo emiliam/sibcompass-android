@@ -1,0 +1,1 @@
+include ':app', ':zip_file', ':play_licensing', ':downloader_library'
