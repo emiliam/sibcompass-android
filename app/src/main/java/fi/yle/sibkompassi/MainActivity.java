@@ -494,6 +494,8 @@ public class MainActivity extends Activity implements SensorEventListener,
 	public void onDownloadStateChanged(int newState) {
 		if (newState == IDownloaderClient.STATE_COMPLETED) {
 			loading.setVisibility(View.GONE);
+			mProgress.setVisibility(View.GONE);
+			playButton.setVisibility(View.VISIBLE);
 			videosFound = true;
 		}
 	}
