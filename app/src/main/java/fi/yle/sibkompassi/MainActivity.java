@@ -146,7 +146,8 @@ public class MainActivity extends Activity implements SensorEventListener,
 		compass = (ImageView) findViewById(R.id.compass);
 		ainola = (ImageView) findViewById(R.id.ainola);
 		symphonyNr = (TextView) findViewById(R.id.symphony_nr);
-	
+		playButton = (ImageButton) findViewById(R.id.play);
+
 		if (checkPlayServices()) {
 			buildGoogleApiClient();
 		}
@@ -158,9 +159,11 @@ public class MainActivity extends Activity implements SensorEventListener,
 		if (null != mDownloaderClientStub) {
 			mDownloaderClientStub.connect(this);
 		}
+		
 		if (videosFound) {
-			playButton = (ImageButton) findViewById(R.id.play);
 			playButton.setVisibility(View.VISIBLE);
+			loading.setVisibility(View.GONE);
+			mProgress.setVisibility(View.GONE);
 		}
 		if (isLocationServiceEnabled()) {
 			Log.i("Location service", "enabled");
@@ -493,9 +496,9 @@ public class MainActivity extends Activity implements SensorEventListener,
 	@Override
 	public void onDownloadStateChanged(int newState) {
 		if (newState == IDownloaderClient.STATE_COMPLETED) {
+			playButton.setVisibility(View.VISIBLE);
 			loading.setVisibility(View.GONE);
 			mProgress.setVisibility(View.GONE);
-			playButton.setVisibility(View.VISIBLE);
 			videosFound = true;
 		}
 	}
