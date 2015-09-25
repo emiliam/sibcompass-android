@@ -25,7 +25,7 @@
         android:theme="@style/AppTheme" >
      
         <service android:name=".extension.DownloaderService" />
-        <receiver android:name=".extension.DonwloaderServiceBroadcastReceiver" />
+        <receiver android:name=".extension.DownloaderServiceBroadcastReceiver" />
    
         <provider 
             android:authorities="fi.yle.sibkompassi.provider.ZipFileContentProvider" 
