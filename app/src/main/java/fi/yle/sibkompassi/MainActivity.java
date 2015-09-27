@@ -281,19 +281,21 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 			float degree = (float) (Math.toDegrees(azimuthInRadians) + 360) % 360;
 
-			int displayHeading = Math.round(degree);
-			heading.setText(Integer.toString(displayHeading) + " °");
+			if (-currentDegree + 3 < degree || degree < -currentDegree - 3) {
+				int displayHeading = Math.round(degree);
+				heading.setText(Integer.toString(displayHeading) + " °");
 
-			RotateAnimation animation = new RotateAnimation(currentDegree,
-					-degree, Animation.RELATIVE_TO_SELF, 0.5f,
-					Animation.RELATIVE_TO_SELF, 0.5f);
-			animation.setDuration(210);
-			animation.setFillAfter(true);
-			compass.startAnimation(animation);
-			currentDegree = -degree;
-			updateSongNumber(displayHeading);
-			if (mLastLocation != null)
-				animateAinolaNeedle();
+				RotateAnimation animation = new RotateAnimation(currentDegree,
+						-degree, Animation.RELATIVE_TO_SELF, 0.5f,
+						Animation.RELATIVE_TO_SELF, 0.5f);
+				animation.setDuration(210);
+				animation.setFillAfter(true);
+				compass.startAnimation(animation);
+				currentDegree = -degree;
+				updateSongNumber(displayHeading);
+				if (mLastLocation != null)
+					animateAinolaNeedle();
+			}
 		}
 
 	}
