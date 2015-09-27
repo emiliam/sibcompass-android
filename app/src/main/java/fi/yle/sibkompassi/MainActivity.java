@@ -119,9 +119,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 					mDownloaderClientStub = DownloaderClientMarshaller
 							.CreateStub(this, DownloaderService.class);
 					
-					loading = (TextView) findViewById(R.id.loading);
 					loading.setVisibility(View.VISIBLE);
-					mProgress = (ProgressBar) findViewById(R.id.progress);
 					mProgress.setVisibility(View.VISIBLE);
 					
 				}
@@ -147,6 +145,8 @@ public class MainActivity extends Activity implements SensorEventListener,
 		ainola = (ImageView) findViewById(R.id.ainola);
 		symphonyNr = (TextView) findViewById(R.id.symphony_nr);
 		playButton = (ImageButton) findViewById(R.id.play);
+        loading = (TextView) findViewById(R.id.loading);
+        mProgress = (ProgressBar) findViewById(R.id.progress);
 
 		if (checkPlayServices()) {
 			buildGoogleApiClient();
@@ -159,7 +159,6 @@ public class MainActivity extends Activity implements SensorEventListener,
 		if (null != mDownloaderClientStub) {
 			mDownloaderClientStub.connect(this);
 		}
-		
 		if (videosFound && expansionFilesDelivered()) {
 			playButton.setVisibility(View.VISIBLE);
 			loading.setVisibility(View.GONE);
@@ -480,7 +479,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	private static final XAPKFile[] xAPKS = { new XAPKFile(true, //true = main file
 			4, // the app version code
-			342282742 // length of the zip file with videos in bytes
+			341941190// length of the zip file with videos in bytes
 	) };
 
 	@Override

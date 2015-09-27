@@ -28,11 +28,11 @@
         <receiver android:name=".extension.DownloaderServiceBroadcastReceiver" />
    
         <provider 
-            android:authorities="fi.yle.sibkompassi.provider.ZipFileContentProvider" 
-            android:name="fi.yle.sibkompassi.provider.ZipFileContentProvider"
+            android:authorities="fi.yle.sibkompassi.provider.ZipFileContentProvider"
+            android:name=".provider.ZipFileContentProvider"
             android:exported="false">
     				<meta-data android:name="mainVersion" 
-    				    android:value="1"></meta-data>
+    				    android:value="4"></meta-data>
         </provider>
         
         <activity
