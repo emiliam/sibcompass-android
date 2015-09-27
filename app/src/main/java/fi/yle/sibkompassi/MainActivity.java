@@ -160,7 +160,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 			mDownloaderClientStub.connect(this);
 		}
 		
-		if (videosFound) {
+		if (videosFound && expansionFilesDelivered()) {
 			playButton.setVisibility(View.VISIBLE);
 			loading.setVisibility(View.GONE);
 			mProgress.setVisibility(View.GONE);
@@ -290,7 +290,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 						Animation.RELATIVE_TO_SELF, 0.5f);
 				animation.setDuration(210);
 				animation.setFillAfter(true);
-				compass.startAnimation(animation);
+				compass.setAnimation(animation);
 				currentDegree = -degree;
 				updateSongNumber(displayHeading);
 				if (mLastLocation != null)
@@ -356,21 +356,18 @@ public class MainActivity extends Activity implements SensorEventListener,
 		ainolaLocation.setLatitude(60.458295);
 		ainolaLocation.setLongitude(25.087905);
 
-		float direction = (float) (-currentDegree * Math.PI / 180.0)
-				+ mLastLocation.bearingTo(ainolaLocation);
-		if (direction > 180) {
-			direction = 360 - direction;
-		} else {
-			direction = 0 - direction;
-		}
+		float direction = (float) -currentDegree
+				- mLastLocation.bearingTo(ainolaLocation);
+        direction = (float) (direction + 360) % 360;
 
-		RotateAnimation animation = new RotateAnimation(currentDegree,
+        RotateAnimation animation = new RotateAnimation(lastAinolaDegree,
 				-direction, Animation.RELATIVE_TO_SELF, 0.5f,
 				Animation.RELATIVE_TO_SELF, 0.5f);
+
 		animation.setDuration(20000);
 		animation.setFillAfter(true);
 		ainola.startAnimation(animation);
-		lastAinolaDegree = direction;
+		lastAinolaDegree = -direction;
 
 	}
 
@@ -410,7 +407,6 @@ public class MainActivity extends Activity implements SensorEventListener,
 		if (mRequestingLocationUpdates) {
 			startLocationUpdates();
 		}
-
 	}
 
 	/**
@@ -455,7 +451,6 @@ public class MainActivity extends Activity implements SensorEventListener,
 			mRequestingLocationUpdates = false;
 		}
 
-		Log.i("fooo", "bar: " + mRequestingLocationUpdates);
 		return mRequestingLocationUpdates;
 	}
 
