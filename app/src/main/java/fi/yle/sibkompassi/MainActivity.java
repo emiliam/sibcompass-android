@@ -479,7 +479,7 @@ public class MainActivity extends Activity implements SensorEventListener,
 	}
 
 	private static final XAPKFile[] xAPKS = { new XAPKFile(true, //true = main file
-			2, // the app version code
+			4, // the app version code
 			342282742 // length of the zip file with videos in bytes
 	) };
 

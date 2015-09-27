@@ -22,7 +22,7 @@ public class PlaySongActivity extends Activity {
 		Intent intent = getIntent();
 		String songNr = intent.getStringExtra(MainActivity.EXTRA_SONG);
 		Uri video = ZipFileContentProvider.buildUri("sibbe_" + songNr + ".mp4");
-		Log.i("PlaySongActivity", "Uri:" + video);		
+		//Log.i("PlaySongActivity", "Uri:" + video);
 		if (video != null) {
 			videoView = (VideoView) findViewById(R.id.videoview);
 			videoView.setVideoURI(video);
