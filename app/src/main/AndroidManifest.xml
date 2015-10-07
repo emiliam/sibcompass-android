@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="fi.yle.sibkompassi"
     android:installLocation="preferExternal"
-    android:versionCode="4"
+    android:versionCode="5"
     android:versionName="1.1" >
 
     
@@ -32,7 +32,7 @@
             android:name=".provider.ZipFileContentProvider"
             android:exported="false">
     				<meta-data android:name="mainVersion" 
-    				    android:value="4"></meta-data>
+    				    android:value="5"></meta-data>
         </provider>
         
         <activity
