@@ -501,7 +501,6 @@ public class MainActivity extends Activity implements SensorEventListener,
 
 	@Override
 	public void onDownloadProgress(DownloadProgressInfo progress) {
-		progress.mOverallTotal = progress.mOverallTotal;
 		mProgress.setMax((int) (progress.mOverallTotal >> 8));
 		mProgress.setProgress((int) (progress.mOverallProgress >> 8));
 		loading.setText("Videoita ladataan, " + Long.toString(progress.mOverallProgress * 100
